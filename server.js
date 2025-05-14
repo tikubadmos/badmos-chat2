@@ -1,185 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Badmos Chat 2</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f9f9fb;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+const express = require('express');
+const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 
-    h1 {
-      text-align: center;
-      background: #6a5acd;
-      color: white;
-      padding: 1rem;
-      margin: 0;
-    }
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 1rem;
-      flex: 1;
-      overflow-y: auto;
-      background: #fff;
-    }
+app.use(express.static(path.join(__dirname, 'public')));
 
-    #messages li {
-      margin-bottom: 10px;
-    }
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-    .message-wrapper {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+io.on('connection', socket => {
+  socket.on('chat message', msg => {
+    io.emit('chat message', msg);
+  });
+});
 
-    .avatar {
-      width: 36px;
-      height: 36px;
-      background: #6a5acd;
-      color: white;
-      font-weight: bold;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .text-block {
-      display: flex;
-      flex-direction: column;
-      background: #f0f0f0;
-      border-radius: 10px;
-      padding: 6px 10px;
-      max-width: 70%;
-    }
-
-    .username {
-      font-weight: bold;
-      font-size: 14px;
-      color: #444;
-      margin-bottom: 2px;
-    }
-
-    .text {
-      font-size: 15px;
-      color: #222;
-      word-wrap: break-word;
-    }
-
-    #chat-form {
-      display: flex;
-      padding: 10px;
-      background: #ffffff;
-      border-top: 1px solid #ccc;
-      gap: 8px;
-    }
-
-    #msg {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    #emoji-btn, #send-btn {
-      font-size: 20px;
-      padding: 0 14px;
-      border: none;
-      background: #6a5acd;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #emoji-btn {
-      background: #eeeeee;
-      color: black;
-    }
-
-    #emoji-btn:hover {
-      background: #ddd;
-    }
-
-    #send-btn:hover {
-      background: #5941d4;
-    }
-  </style>
-</head>
-<body>
-  <h1>💬 Badmos Chat 2</h1>
-  <ul id="messages"></ul>
-
-  <div id="chat-form">
-    <input id="msg" autocomplete="off" placeholder="Type a message..." />
-    <button type="button" id="emoji-btn">😀</button>
-    <button type="button" id="send-btn">Send</button>
-  </div>
-
-  <!-- Socket.io client -->
-  <script src="/socket.io/socket.io.js"></script>
-  <!-- Emoji picker library -->
-  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
-  <script>
-    // 1) Prompt once for username and store it
-    let username = localStorage.getItem('username');
-    if (!username) {
-      username = prompt('Enter your chat name:');
-      localStorage.setItem('username', username);
-    }
-
-    const socket = io();
-    const input = document.getElementById('msg');
-    const messages = document.getElementById('messages');
-    const emojiBtn = document.getElementById('emoji-btn');
-    const sendBtn = document.getElementById('send-btn');
-
-    // 2) Set up emoji picker
-    const picker = new EmojiButton({ position: 'top-end', theme: 'auto' });
-    emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
-    picker.on('emoji', emoji => {
-      input.value += emoji;
-      input.focus();
-    });
-
-    // 3) Send message on button click (no form reload)
-    sendBtn.addEventListener('click', () => {
-      if (input.value.trim()) {
-        socket.emit('chat message', { user: username, text: input.value });
-        input.value = '';
-      }
-    });
-
-    // 4) Receive and render messages with avatars
-    socket.on('chat message', msgObj => {
-      const li = document.createElement('li');
-      const avatarLetter = msgObj.user.charAt(0).toUpperCase();
-      li.innerHTML = `
-        <div class="message-wrapper">
-          <div class="avatar">${avatarLetter}</div>
-          <div class="text-block">
-            <div class="username">${msgObj.user}</div>
-            <div class="text">${msgObj.text}</div>
-          </div>
-        </div>
-      `;
-      messages.appendChild(li);
-      messages.scrollTop = messages.scrollHeight;
-    });
-
-    // 5) Inform server of your username
-    socket.emit('set username', username);
-  </script>
-</body>
-</html>
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
