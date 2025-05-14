@@ -3,6 +3,48 @@
 <head>
   <title>Badmos Chat 2</title>
   <style>
+    .message-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  background: #6a5acd;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.text-block {
+  display: flex;
+  flex-direction: column;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  max-width: 70%;
+}
+
+.username {
+  font-weight: bold;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 2px;
+}
+
+.text {
+  font-size: 15px;
+  color: #222;
+  word-wrap: break-word;
+}
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -105,7 +147,16 @@
 
     socket.on('chat message', msgObj => {
       const li = document.createElement('li');
-      li.innerHTML = `<strong>${msgObj.user}:</strong> ${msgObj.text}`;
+      const avatarLetter = msgObj.user.charAt(0).toUpperCase();
+li.innerHTML = `
+  <div class="message-wrapper">
+    <div class="avatar">${avatarLetter}</div>
+    <div class="text-block">
+      <div class="username">${msgObj.user}</div>
+      <div class="text">${msgObj.text}</div>
+    </div>
+  </div>
+`;
       messages.appendChild(li);
       messages.scrollTop = messages.scrollHeight;
     });
