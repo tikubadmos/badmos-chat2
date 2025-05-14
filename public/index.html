@@ -3,39 +3,111 @@
 <head>
   <title>Badmos Chat 2</title>
   <style>
-    /* basic styling… */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      background: #4CAF50;
+      color: white;
+      padding: 1rem;
+      margin: 0;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 1rem;
+      flex: 1;
+      overflow-y: scroll;
+      background: white;
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #messages li {
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      background: #e6f7ff;
+      border-left: 4px solid #4CAF50;
+      border-radius: 5px;
+    }
+
+    #chat-form {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+      border-top: 1px solid #ccc;
+    }
+
+    #msg {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
+  <h1>💬 Badmos Chat 2</h1>
+
   <ul id="messages"></ul>
+
   <form id="chat-form">
-    <input id="msg" autocomplete="off" /><button>Send</button>
+    <input id="msg" autocomplete="off" placeholder="Type your message..." />
+    <button>Send</button>
   </form>
 
-  <!-- Socket.io client script served by the server -->
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();  // auto-connects to your server
+    // Ask for username
+    let username = '';
+    while (!username) {
+      username = prompt('Enter your chat name:');
+    }
 
+    const socket = io();
     const form = document.getElementById('chat-form');
     const input = document.getElementById('msg');
     const messages = document.getElementById('messages');
 
-    // On form submit, emit the message event
     form.addEventListener('submit', e => {
       e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', input.value);
+      if (input.value.trim()) {
+        socket.emit('chat message', { user: username, text: input.value });
         input.value = '';
       }
     });
 
-    // When a message is broadcast, append it to the list
-    socket.on('chat message', function(msg) {
+    socket.on('chat message', msgObj => {
       const li = document.createElement('li');
-      li.textContent = msg;
+      li.innerHTML = `<strong>${msgObj.user}:</strong> ${msgObj.text}`;
       messages.appendChild(li);
-      window.scrollTo(0, document.body.scrollHeight);
+      messages.scrollTop = messages.scrollHeight;
     });
   </script>
 </body>
