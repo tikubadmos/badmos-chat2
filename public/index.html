@@ -93,7 +93,7 @@
       border-radius: 6px;
     }
 
-    #emoji-btn, #chat-form button[type="submit"] {
+    #emoji-btn, #send-btn {
       font-size: 20px;
       padding: 0 14px;
       border: none;
@@ -112,7 +112,7 @@
       background: #ddd;
     }
 
-    button[type="submit"]:hover {
+    #send-btn:hover {
       background: #5941d4;
     }
   </style>
@@ -120,48 +120,48 @@
 <body>
   <h1>💬 Badmos Chat 2</h1>
   <ul id="messages"></ul>
-  <form id="chat-form">
+
+  <div id="chat-form">
     <input id="msg" autocomplete="off" placeholder="Type a message..." />
     <button type="button" id="emoji-btn">😀</button>
-    <button type="submit">Send</button>
-  </form>
+    <button type="button" id="send-btn">Send</button>
+  </div>
 
-  <!-- Scripts -->
+  <!-- Socket.io client -->
   <script src="/socket.io/socket.io.js"></script>
+  <!-- Emoji picker library -->
   <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
   <script>
-    let username = '';
-    while (!username) {
+    // 1) Prompt once for username and store it
+    let username = localStorage.getItem('username');
+    if (!username) {
       username = prompt('Enter your chat name:');
+      localStorage.setItem('username', username);
     }
 
     const socket = io();
-    const form = document.getElementById('chat-form');
     const input = document.getElementById('msg');
     const messages = document.getElementById('messages');
     const emojiBtn = document.getElementById('emoji-btn');
+    const sendBtn = document.getElementById('send-btn');
 
-    // Emoji Picker
+    // 2) Set up emoji picker
     const picker = new EmojiButton({ position: 'top-end', theme: 'auto' });
-    emojiBtn.addEventListener('click', () => {
-      picker.togglePicker(emojiBtn);
-    });
-
+    emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
     picker.on('emoji', emoji => {
       input.value += emoji;
       input.focus();
     });
 
-    // Send message
-    form.addEventListener('submit', e => {
-      e.preventDefault();
+    // 3) Send message on button click (no form reload)
+    sendBtn.addEventListener('click', () => {
       if (input.value.trim()) {
         socket.emit('chat message', { user: username, text: input.value });
         input.value = '';
       }
     });
 
-    // Receive message
+    // 4) Receive and render messages with avatars
     socket.on('chat message', msgObj => {
       const li = document.createElement('li');
       const avatarLetter = msgObj.user.charAt(0).toUpperCase();
@@ -178,7 +178,7 @@
       messages.scrollTop = messages.scrollHeight;
     });
 
-    // Set username on server
+    // 5) Inform server of your username
     socket.emit('set username', username);
   </script>
 </body>
