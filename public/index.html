@@ -1,34 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head><title>Chat App</title></head>
-  <body>
-    <h2>Chat App</h2>
-    <input id="username" placeholder="Your name" />
-    <div id="chat" style="height:300px; overflow:auto; border:1px solid #ccc;"></div>
-    <input id="msg" placeholder="Type a message" />
-    <button onclick="send()">Send</button>
+<head>
+  <title>Badmos Chat 2</title>
+  <style>
+    /* basic styling… */
+  </style>
+</head>
+<body>
+  <ul id="messages"></ul>
+  <form id="chat-form">
+    <input id="msg" autocomplete="off" /><button>Send</button>
+  </form>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-      const socket = io();
-      let username = "";
-      document.getElementById("username").addEventListener("change", function () {
-        username = this.value;
-      });
+  <!-- Socket.io client script served by the server -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();  // auto-connects to your server
 
-      function send() {
-        const msg = document.getElementById("msg").value;
-        if (username && msg) {
-          socket.emit("message", username + ": " + msg);
-          document.getElementById("msg").value = "";
-        }
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('msg');
+    const messages = document.getElementById('messages');
+
+    // On form submit, emit the message event
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
       }
+    });
 
-      socket.on("message", (data) => {
-        const chat = document.getElementById("chat");
-        chat.innerHTML += "<p>" + data + "</p>";
-        chat.scrollTop = chat.scrollHeight;
-      });
-    </script>
-  </body>
+    // When a message is broadcast, append it to the list
+    socket.on('chat message', function(msg) {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      messages.appendChild(li);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+  </script>
+</body>
 </html>
