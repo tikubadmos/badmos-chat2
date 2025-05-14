@@ -1,41 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Badmos Chat 2</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
-      background: #f9f9fb;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
 
     h1 {
-      text-align: center;
-      background: #6a5acd;
+      background-color: #6200ea;
       color: white;
-      padding: 1rem;
+      padding: 16px;
       margin: 0;
+      text-align: center;
     }
 
     #messages {
-      list-style-type: none;
+      list-style: none;
+      padding: 16px;
       margin: 0;
-      padding: 1rem;
-      flex: 1;
       overflow-y: auto;
-      background: #fff;
+      flex: 1;
     }
 
     #messages li {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
-    .message-wrapper {
+    .message {
       display: flex;
       align-items: flex-start;
       gap: 10px;
@@ -44,48 +43,43 @@
     .avatar {
       width: 36px;
       height: 36px;
-      background: #6a5acd;
+      border-radius: 50%;
+      background-color: #6200ea;
       color: white;
-      font-weight: bold;
-      font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
-      flex-shrink: 0;
+      font-weight: bold;
+      font-size: 16px;
     }
 
-    .text-block {
-      display: flex;
-      flex-direction: column;
-      background: #f0f0f0;
+    .bubble {
+      background: #fff;
+      padding: 10px;
       border-radius: 10px;
-      padding: 6px 10px;
       max-width: 70%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
     .username {
       font-weight: bold;
       font-size: 14px;
-      color: #444;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
 
     .text {
       font-size: 15px;
-      color: #222;
-      word-wrap: break-word;
+      color: #333;
     }
 
-    #chat-form {
+    form {
       display: flex;
       padding: 10px;
-      background: #ffffff;
+      background: #fff;
       border-top: 1px solid #ccc;
-      gap: 8px;
     }
 
-    #msg {
+    input {
       flex: 1;
       padding: 10px;
       font-size: 16px;
@@ -93,93 +87,69 @@
       border-radius: 6px;
     }
 
-    #emoji-btn, #send-btn {
-      font-size: 20px;
-      padding: 0 14px;
-      border: none;
-      background: #6a5acd;
+    button {
+      padding: 0 16px;
+      font-size: 16px;
+      background-color: #6200ea;
       color: white;
+      border: none;
       border-radius: 6px;
+      margin-left: 10px;
       cursor: pointer;
     }
 
-    #emoji-btn {
-      background: #eeeeee;
-      color: black;
-    }
-
-    #emoji-btn:hover {
-      background: #ddd;
-    }
-
-    #send-btn:hover {
-      background: #5941d4;
+    button:hover {
+      background-color: #4500b5;
     }
   </style>
 </head>
 <body>
   <h1>💬 Badmos Chat 2</h1>
   <ul id="messages"></ul>
+  <form id="form">
+    <input id="input" autocomplete="off" placeholder="Type a message..." />
+    <button type="submit">Send</button>
+  </form>
 
-  <div id="chat-form">
-    <input id="msg" autocomplete="off" placeholder="Type a message..." />
-    <button type="button" id="emoji-btn">😀</button>
-    <button type="button" id="send-btn">Send</button>
-  </div>
-
-  <!-- Socket.io client -->
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Emoji picker library -->
-  <script src="https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js"></script>
   <script>
-    // 1) Prompt once for username and store it
+    const socket = io();
+
     let username = localStorage.getItem('username');
     if (!username) {
-      username = prompt('Enter your chat name:');
+      username = prompt("Enter your name:");
       localStorage.setItem('username', username);
     }
 
-    const socket = io();
-    const input = document.getElementById('msg');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
     const messages = document.getElementById('messages');
-    const emojiBtn = document.getElementById('emoji-btn');
-    const sendBtn = document.getElementById('send-btn');
 
-    // 2) Set up emoji picker
-    const picker = new EmojiButton({ position: 'top-end', theme: 'auto' });
-    emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
-    picker.on('emoji', emoji => {
-      input.value += emoji;
-      input.focus();
-    });
-
-    // 3) Send message on button click (no form reload)
-    sendBtn.addEventListener('click', () => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
       if (input.value.trim()) {
-        socket.emit('chat message', { user: username, text: input.value });
+        socket.emit('chat message', {
+          user: username,
+          text: input.value
+        });
         input.value = '';
       }
     });
 
-    // 4) Receive and render messages with avatars
-    socket.on('chat message', msgObj => {
+    socket.on('chat message', function(msg) {
       const li = document.createElement('li');
-      const avatarLetter = msgObj.user.charAt(0).toUpperCase();
       li.innerHTML = `
-        <div class="message-wrapper">
-          <div class="avatar">${avatarLetter}</div>
-          <div class="text-block">
-            <div class="username">${msgObj.user}</div>
-            <div class="text">${msgObj.text}</div>
+        <div class="message">
+          <div class="avatar">${msg.user.charAt(0).toUpperCase()}</div>
+          <div class="bubble">
+            <div class="username">${msg.user}</div>
+            <div class="text">${msg.text}</div>
           </div>
         </div>
       `;
       messages.appendChild(li);
       messages.scrollTop = messages.scrollHeight;
     });
-
-    // 5) Inform server of your username
-    socket.emit('set username', username);
   </script>
 </body>
 </html>
